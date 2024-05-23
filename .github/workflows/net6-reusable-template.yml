@@ -8,6 +8,10 @@ on:
         description: "dotnet version"
         required: true
         type: string
+      app-name:
+        description: "application name"
+        required: true
+        type: string
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,7 +36,7 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/ ${{ inputs.app-name }}
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
