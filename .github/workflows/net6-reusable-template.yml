@@ -62,7 +62,7 @@ jobs:
 
       - name: check environment variables
         run: |
-             echo "env variable check: {{vars.TEST}}"
+             echo "env variable check: ${{vars.TEST}}"
       
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
