@@ -49,11 +49,11 @@ jobs:
 
     # This step builds the project.
       - name: Build
-        run: dotnet build -configuration Release --no-restore 
+        run: dotnet build -c Release --no-restore 
         
     # This step create the nuget pack.
       - name: NuGet pack
-        run: dotnet pack  --c Release -o ./${{inputs.nuget-pack-name}}
+        run: dotnet pack  -c Release -o ./${{inputs.nuget-pack-name}}
         
     # This step push the nuget pack.
       - name: NuGet push
