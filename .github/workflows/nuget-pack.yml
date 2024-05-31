@@ -12,25 +12,12 @@ on:
         description: "nuget pack name"
         required: true
         type: string
+      project-path-and-name:
+        description: "The path and name of the project to build"
+        required: true
+        type: string
+        
 jobs:
-  repo-sync:
-    name: Sync Repo
-    runs-on: ubuntu-latest
-    environment:
-      name: 'Development'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-      
-    steps:
-      - uses: actions/checkout@v4
-      - name: checking Environment
-        run: |
-             echo "Scripts executing environment::  ${{vars.Environment}}"
-      - name: run commands
-        run: bash ${GITHUB_WORKSPACE}/scripts/syncrepo.sh
-        env:
-          GH_TOKEN: ${{ secrets.GH_PATTOKEN }}
-          GH_PAT: ${{ secrets.GH_PATTOKEN }}
-          ADO_PAT: ${{ secrets.ADO_PAT }}
   build:
     runs-on: ubuntu-latest
 
@@ -61,4 +48,13 @@ jobs:
 
     # This step builds the project.
       - name: Build
-        run: dotnet build ${{ inputs.project-path-and-name }} -configuration Release --no-restore            
+        run: dotnet build ${{ inputs.project-path-and-name }} -configuration Release --no-restore 
+        
+    # This step create the nuget pack.
+      - name: NuGet pack
+        run: dotnet pack ${{ inputs.project-path-and-name }} --c Release -o ./${{inputs.nuget-pack-name}}
+        
+    # This step push the nuget pack.
+      - name: NuGet push
+        run: dotnet nuget push "./${{inputs.nuget-pack-name}}"  --api-key ${{ secrets.GH_PATTOKEN }} --source "https://nuget.pkg.github.com/workflow25/index.json"
+
