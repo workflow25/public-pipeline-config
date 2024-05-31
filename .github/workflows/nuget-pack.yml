@@ -12,10 +12,6 @@ on:
         description: "nuget pack name"
         required: true
         type: string
-      project-path-and-name:
-        description: "The path and name of the project to build"
-        required: true
-        type: string
         
 jobs:
   build:
@@ -53,11 +49,11 @@ jobs:
 
     # This step builds the project.
       - name: Build
-        run: dotnet build ${{ inputs.project-path-and-name }} -configuration Release --no-restore 
+        run: dotnet build -configuration Release --no-restore 
         
     # This step create the nuget pack.
       - name: NuGet pack
-        run: dotnet pack ${{ inputs.project-path-and-name }} --c Release -o ./${{inputs.nuget-pack-name}}
+        run: dotnet pack  --c Release -o ./${{inputs.nuget-pack-name}}
         
     # This step push the nuget pack.
       - name: NuGet push
