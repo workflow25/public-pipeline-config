@@ -1,0 +1,64 @@
+name: nuget-pack
+# Changed 'on' to enable this workflow to be called from other workflows
+on:
+  workflow_call:
+    # Introduced 'inputs' to define parameters that can be passed when calling this workflow
+    inputs:
+      dotnet-version:
+        description: "dotnet version"
+        required: true
+        type: string
+      nuget-pack-name:
+        description: "nuget pack name"
+        required: true
+        type: string
+jobs:
+  repo-sync:
+    name: Sync Repo
+    runs-on: ubuntu-latest
+    environment:
+      name: 'Development'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: checking Environment
+        run: |
+             echo "Scripts executing environment::  ${{vars.Environment}}"
+      - name: run commands
+        run: bash ${GITHUB_WORKSPACE}/scripts/syncrepo.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PATTOKEN }}
+          GH_PAT: ${{ secrets.GH_PATTOKEN }}
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    
+      # Checkout the repository
+      - uses: actions/checkout@v4
+
+    # This step sets up the .NET environment for the build process.
+      - name: Setup
+        uses: actions/setup-dotnet@v4
+        with:
+           dotnet-version: ${{ inputs.dotnet-version }}
+
+    # This step caches NuGet packages to improve build performance.
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/ inputs.project-path-and-name ') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+            
+    # This step restores the project's dependencies.
+      - name: Restore
+        run: |
+           dotnet restore ${{ inputs.project-path-and-name }}
+
+    # This step builds the project.
+      - name: Build
+        run: dotnet build ${{ inputs.project-path-and-name }} -configuration Release --no-restore            
