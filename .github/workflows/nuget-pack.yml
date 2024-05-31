@@ -22,10 +22,6 @@ jobs:
       # Checkout the repository
       - uses: actions/checkout@v4
       - name : check path
-        run : |
-             cd ${GITHUB_WORKSPACE}
-             pwd
-             ls
 
     # This step sets up the .NET environment for the build process.
       - name: Setup
