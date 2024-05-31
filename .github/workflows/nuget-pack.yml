@@ -57,5 +57,5 @@ jobs:
         
     # This step push the nuget pack.
       - name: NuGet push
-        run: dotnet nuget push "./${{inputs.nuget-pack-name}}"  --api-key ${{ secrets.GH_PATTOKEN }} --source "https://nuget.pkg.github.com/workflow25/index.json"
+        run: dotnet nuget push "./${{inputs.nuget-pack-name}}/*.nupkg"  --api-key ${{ secrets.GH_PATTOKEN }} --source "https://nuget.pkg.github.com/workflow25/index.json"
 
