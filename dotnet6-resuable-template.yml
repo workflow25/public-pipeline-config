@@ -1,0 +1,119 @@
+name: net6-template
+# Changed 'on' to enable this workflow to be called from other workflows
+on:
+  workflow_call:
+    # Introduced 'inputs' to define parameters that can be passed when calling this workflow
+    inputs:
+      dotnet-version:
+        description: "dotnet version"
+        required: true
+        type: string
+      app-name:
+        description: "application name"
+        required: true
+        type: string
+jobs:
+  repo-sync:
+    name: Sync Repo
+    runs-on: devEnv
+    environment:
+      name: 'Development'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: checking Environment
+        run: |
+             echo "Scripts executing environment::  ${{vars.Environment}}"
+      - name: run commands
+        run: bash ${GITHUB_WORKSPACE}/scripts/syncrepo.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PATTOKEN }}
+          GH_PAT: ${{ secrets.GH_PATTOKEN }}
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+  build:
+    runs-on: devEnv
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: Set up dependency caching for faster builds
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+            
+      - name: check path
+        run: |
+             dir
+        
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/${{ inputs.app-name }}
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/${{ inputs.app-name }}
+
+  deploy-stg:
+    name: staging
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Staging'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: .net-app
+
+      - name: check environment variables
+        run: |
+             echo "env variable check: ${{vars.TEST}}"
+      
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+  deploy-prod:
+    name: production
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    needs: deploy-stg
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: .net-app
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
