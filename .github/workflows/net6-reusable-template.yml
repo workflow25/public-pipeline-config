@@ -15,7 +15,7 @@ on:
 jobs:
   repo-sync:
     name: Sync Repo
-    runs-on: devEnv
+    runs-on: ubuntu-latest
     environment:
       name: 'Development'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
@@ -63,14 +63,14 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
-          name: .net-app
+          name: ${{ inputs.app-name }}
           path: ${{env.DOTNET_ROOT}}/${{ inputs.app-name }}
 
   deploy-stg:
     name: staging
     permissions:
       contents: none
-    runs-on: ubuntu-latest
+    runs-on: devEnv
     needs: build
     environment:
       name: 'Staging'
@@ -80,7 +80,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
-          name: .net-app
+          name: ${{ inputs.app-name }}
 
       - name: check environment variables
         run: |
