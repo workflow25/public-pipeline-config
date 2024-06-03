@@ -15,7 +15,7 @@ on:
 jobs:
   repo-sync:
     name: Sync Repo
-    runs-on: ubuntu-latest
+    runs-on: devEnv
     environment:
       name: 'Development'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
