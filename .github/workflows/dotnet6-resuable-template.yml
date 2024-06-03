@@ -60,12 +60,6 @@ jobs:
       - name: dotnet publish
         run: dotnet publish -c Release -property:OutputPath=./publish/${{ inputs.app-name }}
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/${{ inputs.app-name }}
-
   deploy-stg:
     name: staging
     permissions:
